@@ -10,7 +10,8 @@ import (
 )
 
 const (
-	_GPTHeaderStart = 512
+	_GPTHeaderOffset = 512
+	_GPTSignature    = "EFI PART"
 )
 
 // GUID represents a GUID in binary format according to RFC4122 as in GPT Header
@@ -56,8 +57,8 @@ type Header struct {
 	_                          [420]byte
 }
 
-// Read GPT header from file
-func Read(filename string) (*Header, error) {
+// ReadHeader reads the GPT header from a file
+func ReadHeader(filename string) (*Header, error) {
 	header := Header{}
 
 	file, err := os.Open(filename)
@@ -68,16 +69,15 @@ func Read(filename string) (*Header, error) {
 
 	defer file.Close()
 
-	gptHeader := make([]byte, 512)
+	headerBytes := make([]byte, 512)
 
-	file.Seek(_GPTHeaderStart, 0)
-	file.Read(gptHeader)
+	file.ReadAt(headerBytes, _GPTHeaderOffset)
 
-	buffer := bytes.NewBuffer(gptHeader)
+	headerBuffer := bytes.NewBuffer(headerBytes)
 
-	_ = binary.Read(buffer, binary.LittleEndian, &header)
+	_ = binary.Read(headerBuffer, binary.LittleEndian, &header)
 
-	if string(header.Signature[:8]) != "EFI PART" {
+	if string(header.Signature[:8]) != _GPTSignature {
 		return &Header{}, errors.New("No GPT found")
 	}
 
