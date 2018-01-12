@@ -3,8 +3,14 @@ package gpt
 import (
 	"bytes"
 	"encoding/binary"
+	"errors"
+	"os"
 
 	"github.com/google/uuid"
+)
+
+const (
+	_GPTHeaderStart = 512
 )
 
 // GUID represents a GUID in binary format according to RFC4122 as in GPT Header
@@ -48,4 +54,32 @@ type Header struct {
 	SizeOfSinglePartitionEntry uint32
 	PartitionArrayCRC32        uint32
 	_                          [420]byte
+}
+
+// Read GPT header from file
+func Read(filename string) (*Header, error) {
+	header := Header{}
+
+	file, err := os.Open(filename)
+
+	if err != nil {
+		return &header, err
+	}
+
+	defer file.Close()
+
+	gptHeader := make([]byte, 512)
+
+	file.Seek(_GPTHeaderStart, 0)
+	file.Read(gptHeader)
+
+	buffer := bytes.NewBuffer(gptHeader)
+
+	_ = binary.Read(buffer, binary.LittleEndian, &header)
+
+	if string(header.Signature[:8]) != "EFI PART" {
+		return &Header{}, errors.New("No GPT found")
+	}
+
+	return &header, nil
 }
