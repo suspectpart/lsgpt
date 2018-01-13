@@ -31,3 +31,12 @@ func Test_ShouldBreakOnBrokenEFISignature(t *testing.T) {
 		t.Errorf("gpt.ReadHeader(%q) should throw an error", testfile)
 	}
 }
+
+func Test_ShouldBreakOnNonexistantFile(t *testing.T) {
+	nonexistantfile := "/nonexistant/file"
+	_, err := gpt.ReadHeader(nonexistantfile)
+
+	if err == nil {
+		t.Errorf("gpt.ReadHeader(%q) should throw an error", nonexistantfile)
+	}
+}
