@@ -1,4 +1,4 @@
-package gpt
+package gpt_test
 
 import (
 	"fmt"
