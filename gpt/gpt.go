@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"errors"
+	"fmt"
 	"os"
 
 	"github.com/google/uuid"
@@ -78,8 +79,29 @@ func ReadHeader(filename string) (*Header, error) {
 	_ = binary.Read(headerBuffer, binary.LittleEndian, &header)
 
 	if string(header.Signature[:8]) != _GPTSignature {
-		return &Header{}, errors.New("No GPT found")
+		return &Header{}, errors.New("No GPT found on " + filename)
 	}
 
 	return &header, nil
+}
+
+func (header *Header) String() string {
+	return fmt.Sprintf(
+		`=== GPT Header ===
+Disk UUID:			%s
+Header Checksum CRC32:		%d
+Header Size:			%d
+First Usable LBA:		%d
+Last Usable LBA:		%d
+Partition Entries Start LBA:	%d
+Partition Entry Size:		%d
+==================`,
+		header.DiskGUID.AsUUID(),
+		header.HeaderCRC32,
+		header.HeaderSize,
+		header.FirstUsableLBA,
+		header.LastUsableLBA,
+		header.StartLBA,
+		header.SizeOfSinglePartitionEntry,
+	)
 }
