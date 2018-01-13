@@ -3,6 +3,7 @@ Dumps GPT (Guid Partition Table) information on EFI systems. This project has no
 
 See [Wikipedia/GPT](https://en.wikipedia.org/wiki/GUID_Partition_Table) for information about the GPT structure. 
 
+
 ## Install
 ```bash
 $ go get github.com/suspectpart/lsgpt
@@ -12,5 +13,11 @@ $ go get github.com/suspectpart/lsgpt
 ```bash
 $ sudo $GOPATH/bin/lsgpt /dev/sdx
 ```
-
 Replace `/dev/sdx` with the drive that contains your GPT.
+
+
+## Test
+```bash
+$ go test ./gpt/
+```
+
