@@ -19,12 +19,12 @@ func main() {
 
 	filename := os.Args[1]
 
-	header, err := gpt.ReadHeader(filename)
+	table, err := gpt.ReadFrom(filename)
 
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(errorCode)
 	}
 
-	fmt.Println(header)
+	fmt.Println(table)
 }

@@ -15,6 +15,16 @@ const (
 	_GPTSignature    = "EFI PART"
 )
 
+// PartitionEntry represents one entry in the GPT Partition Array
+type PartitionEntry struct {
+	PartitionType     GUID
+	UniquePartitionID GUID
+	FirstLBA          uint64
+	LastLBA           uint64
+	Flags             uint64
+	PartitonName      [72]byte
+}
+
 // GUID represents a GUID in binary format according to RFC4122 as in GPT Header
 type GUID struct {
 	TimeLow          uint32
@@ -58,34 +68,74 @@ type Header struct {
 	_                          [420]byte
 }
 
-// ReadHeader reads the GPT header from a file
-func ReadHeader(filename string) (*Header, error) {
-	header := Header{}
+// GUIDPartitionTable represents a GPT on EFI systems
+type GUIDPartitionTable struct {
+	Header  Header
+	Entries [128]PartitionEntry
+}
+
+// ReadFrom reads the GPT header from a file
+func ReadFrom(filename string) (*GUIDPartitionTable, error) {
+	table := GUIDPartitionTable{}
 
 	file, err := os.Open(filename)
 
 	if err != nil {
-		return &header, err
+		return &table, err
 	}
 
 	defer file.Close()
 
-	headerBytes := make([]byte, 512)
+	tableBytes := make([]byte, 512+128*128)
 
-	file.ReadAt(headerBytes, _GPTHeaderOffset)
+	file.ReadAt(tableBytes, _GPTHeaderOffset)
 
-	headerBuffer := bytes.NewBuffer(headerBytes)
+	tableBuffer := bytes.NewBuffer(tableBytes)
 
-	_ = binary.Read(headerBuffer, binary.LittleEndian, &header)
+	_ = binary.Read(tableBuffer, binary.LittleEndian, &table)
 
-	if string(header.Signature[:8]) != _GPTSignature {
-		return &Header{}, errors.New("No GPT found on " + filename)
+	if string(table.Header.Signature[:8]) != _GPTSignature {
+		return &GUIDPartitionTable{}, errors.New("No GPT found on " + filename)
 	}
 
-	return &header, nil
+	return &table, nil
 }
 
-func (header *Header) String() string {
+// IsEmpty checks if a partition entry does not point to an existing partition
+func (entry PartitionEntry) IsEmpty() bool {
+	return entry.FirstLBA == 0 && entry.LastLBA == 0
+}
+
+// NumPartitions returns the number of used partitions in the given GUIDPartitionTable
+func (table *GUIDPartitionTable) NumPartitions() int {
+	partitions := 0
+
+	for _, entry := range table.Entries {
+		if entry.IsEmpty() {
+			break
+		}
+
+		partitions++
+	}
+
+	return partitions
+}
+
+func (table *GUIDPartitionTable) String() string {
+	str := table.Header.String()
+
+	str += fmt.Sprintf("Number\tStart (sector)\tEnd (sector)\tName\n")
+
+	for i := 0; i < table.NumPartitions(); i++ {
+		var entry = table.Entries[i]
+
+		str += fmt.Sprintf("%d\t%d\t\t%d\t\t%s\n", i+1, entry.FirstLBA, entry.LastLBA, entry.PartitonName)
+	}
+
+	return str
+}
+
+func (header Header) String() string {
 	return fmt.Sprintf(
 		`=== GPT Header ===
 Disk UUID:			%s
@@ -103,5 +153,5 @@ Partition Entry Size:		%d
 		header.LastUsableLBA,
 		header.StartLBA,
 		header.SizeOfSinglePartitionEntry,
-	)
+	) + "\n"
 }
