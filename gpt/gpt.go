@@ -89,33 +89,19 @@ func ReadFrom(filename string) (*GUIDPartitionTable, error) {
 	return &table, nil
 }
 
-// NumPartitions returns the number of used partitions in the given GUIDPartitionTable
-func (table *GUIDPartitionTable) NumPartitions() int {
-	partitions := 0
+func (table *GUIDPartitionTable) String() string {
+	fmtTable := table.Header.String()
+	fmtTable += fmt.Sprintf("Number\tStart (sector)\tEnd (sector)\tGUID\t\t\t\t\t\tName\n")
 
-	for _, entry := range table.Entries {
+	for i, entry := range table.Entries {
 		if entry.IsEmpty() {
-			break
+			continue
 		}
 
-		partitions++
+		fmtTable += fmt.Sprintf("%d\t%d\t\t%d\t\t%s\t\t%s\n", i+1, entry.FirstLBA, entry.LastLBA, entry.UniquePartitionID.AsUUID(), entry.PartitonName)
 	}
 
-	return partitions
-}
-
-func (table *GUIDPartitionTable) String() string {
-	str := table.Header.String()
-
-	str += fmt.Sprintf("Number\tStart (sector)\tEnd (sector)\tName\n")
-
-	for i := 0; i < table.NumPartitions(); i++ {
-		var entry = table.Entries[i]
-
-		str += fmt.Sprintf("%d\t%d\t\t%d\t\t%s\n", i+1, entry.FirstLBA, entry.LastLBA, entry.PartitonName)
-	}
-
-	return str
+	return fmtTable
 }
 
 // IsEmpty checks if a partition entry does not point to an existing partition
