@@ -24,7 +24,7 @@ type GUID struct {
 	TimeLow          uint32
 	TimeMid          uint16
 	TimeHiAndVersion uint16
-	Nodes            uint64
+	Seq              uint64
 }
 
 // PartitionEntry represents one entry in the GPT Partition Array
@@ -94,7 +94,7 @@ func (table *GUIDPartitionTable) String() string {
 	fmtTable += fmt.Sprintf("Number\tStart (sector)\tEnd (sector)\tGUID\t\t\t\t\t\tName\n")
 
 	for i, entry := range table.Entries {
-		if entry.IsEmpty() {
+		if entry.IsUnused() {
 			continue
 		}
 
@@ -104,9 +104,10 @@ func (table *GUIDPartitionTable) String() string {
 	return fmtTable
 }
 
-// IsEmpty checks if a partition entry does not point to an existing partition
-func (entry PartitionEntry) IsEmpty() bool {
-	return entry.FirstLBA == 0 && entry.LastLBA == 0
+// IsUnused checks if a partition entry does not point to an existing partition
+func (entry PartitionEntry) IsUnused() bool {
+	var emptyUUID uuid.UUID
+	return entry.PartitionType.AsUUID() == emptyUUID
 }
 
 // AsUUID takes a GUID structure and transforms it to a uuid.UUID
@@ -118,7 +119,7 @@ func (guid *GUID) AsUUID() uuid.UUID {
 	_ = binary.Write(buf, binary.BigEndian, guid.TimeLow)
 	_ = binary.Write(buf, binary.BigEndian, guid.TimeMid)
 	_ = binary.Write(buf, binary.BigEndian, guid.TimeHiAndVersion)
-	_ = binary.Write(buf, binary.LittleEndian, guid.Nodes)
+	_ = binary.Write(buf, binary.LittleEndian, guid.Seq)
 
 	copy(result[:], buf.Bytes())
 
