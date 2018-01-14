@@ -7,14 +7,10 @@ import (
 	"github.com/suspectpart/lsgpt/gpt"
 )
 
-const (
-	errorCode = 1
-)
-
 func main() {
 	if len(os.Args) != 2 {
 		fmt.Println("lsgpt: missing file operand")
-		os.Exit(errorCode)
+		os.Exit(1)
 	}
 
 	filename := os.Args[1]
@@ -23,7 +19,7 @@ func main() {
 
 	if err != nil {
 		fmt.Println(err)
-		os.Exit(errorCode)
+		os.Exit(1)
 	}
 
 	fmt.Println(table)

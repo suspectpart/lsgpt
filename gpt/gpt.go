@@ -82,7 +82,7 @@ func ReadFrom(filename string) (*GUIDPartitionTable, error) {
 
 	_ = binary.Read(tableBuffer, binary.LittleEndian, &table)
 
-	if string(table.Header.Signature[:8]) != _GPTSignature {
+	if string(table.Header.Signature[:]) != _GPTSignature {
 		return &GUIDPartitionTable{}, errors.New("No GPT found on " + filename)
 	}
 
@@ -98,7 +98,12 @@ func (table *GUIDPartitionTable) String() string {
 			continue
 		}
 
-		fmtTable += fmt.Sprintf("%d\t%d\t\t%d\t\t%s\t\t%s\n", i+1, entry.FirstLBA, entry.LastLBA, entry.UniquePartitionID.AsUUID(), entry.PartitonName)
+		fmtTable += fmt.Sprintf("%d\t%d\t\t%d\t\t%s\t\t%s\n",
+			i+1,
+			entry.FirstLBA,
+			entry.LastLBA,
+			entry.UniquePartitionID.AsUUID(),
+			entry.PartitonName)
 	}
 
 	return fmtTable
