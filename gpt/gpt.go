@@ -91,18 +91,18 @@ func ReadFrom(filename string) (*GUIDPartitionTable, error) {
 
 func (table *GUIDPartitionTable) String() string {
 	fmtTable := table.Header.String()
-	fmtTable += fmt.Sprintf("Number\tStart (sector)\tEnd (sector)\tGUID\t\t\t\t\t\tName\n")
+	fmtTable += fmt.Sprintf("Number\tGUID\t\t\t\t\t\tStart (sector)\tEnd (sector)\tName\n")
 
 	for i, entry := range table.Entries {
 		if entry.IsUnused() {
 			continue
 		}
 
-		fmtTable += fmt.Sprintf("%d\t%d\t\t%d\t\t%s\t\t%s\n",
+		fmtTable += fmt.Sprintf("%d\t%s\t\t%d\t\t%d\t\t%s\n",
 			i+1,
+			entry.UniquePartitionID.AsUUID(),
 			entry.FirstLBA,
 			entry.LastLBA,
-			entry.UniquePartitionID.AsUUID(),
 			entry.PartitonName)
 	}
 
