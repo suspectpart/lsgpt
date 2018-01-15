@@ -5,6 +5,53 @@ import (
 	"testing"
 )
 
+func Test_ShouldCalculateCRC32(t *testing.T) {
+	testfileOk := "gpt_test_hd"
+	expectedHeaderCRC32 := uint32(1474004683)
+
+	table, err := ReadFrom(testfileOk)
+
+	if err != nil {
+		t.Errorf("ReadFrom(%q) threw error while reading testfile", testfileOk)
+	}
+
+	actualHeaderCRC32 := table.Header.CalculateCRC32()
+	if actualHeaderCRC32 != expectedHeaderCRC32 {
+		t.Errorf("CalculateCRC32(%q): Actual %d != expected %d", testfileOk, actualHeaderCRC32, expectedHeaderCRC32)
+	}
+}
+
+func Test_ShouldCheckCRC32(t *testing.T) {
+	testfileOk := "gpt_test_hd"
+
+	table, err := ReadFrom(testfileOk)
+
+	if err != nil {
+		t.Errorf("ReadFrom(%q) threw error while reading testfile", testfileOk)
+	}
+
+	if !table.Header.CheckCRC32() {
+		t.Errorf("CalculateCRC32(%q): Actual %t != expected %t", testfileOk, false, true)
+	}
+}
+
+func Test_ShouldCheckWrongCRC32(t *testing.T) {
+	testfileOk := "gpt_test_hd"
+
+	table, err := ReadFrom(testfileOk)
+
+	if err != nil {
+		t.Errorf("ReadFrom(%q) threw error while reading testfile", testfileOk)
+	}
+
+	// make crc32 invalid by incrementing
+	table.Header.HeaderCRC32++
+
+	if table.Header.CheckCRC32() {
+		t.Errorf("CalculateCRC32(%q): Actual %t != expected %t", testfileOk, true, false)
+	}
+}
+
 func Test_ShouldReadHeader(t *testing.T) {
 	testfileOk := "gpt_test_hd"
 	expectedUUID := "d0f2f537-fdf7-41ad-acb9-42f0aeb3781d"

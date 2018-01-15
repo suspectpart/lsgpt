@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
+	"hash/crc32"
 	"os"
 
 	"github.com/google/uuid"
@@ -87,6 +88,22 @@ func ReadFrom(filename string) (*GUIDPartitionTable, error) {
 	}
 
 	return &table, nil
+}
+
+// CalculateCRC32 calculates the crc32 of the Header
+func (header *Header) CalculateCRC32() uint32 {
+	var buf bytes.Buffer
+	binary.Write(&buf, binary.LittleEndian, header)
+
+	// zero out crc32 checksum in header
+	copy(buf.Bytes()[0x10:], make([]byte, 4))
+
+	return crc32.ChecksumIEEE(buf.Bytes()[:header.HeaderSize])
+}
+
+// CheckCRC32 calculates the actual CRC32 of the header and compares it against the declared CRC32
+func (header *Header) CheckCRC32() bool {
+	return header.CalculateCRC32() == header.HeaderCRC32
 }
 
 func (table *GUIDPartitionTable) String() string {
